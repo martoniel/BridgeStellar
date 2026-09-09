@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  LIQUIDITY_PROVIDER
+}
+
+enum InvoiceStatus {
+  PENDING
+  ACTIVE
+  FUNDED
+  SETTLED
+  DEFAULTED
+  DISPUTED
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String
+  stellarAddress String    @unique
+  role           UserRole  @default(USER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  invoices        Invoice[]
+  shares          Share[]
+  notifications   Notification[]
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  contractInvoiceId String?       @unique
+  creatorId        String
+  buyerAddress     String
+  amount           Float
+  denomination     String        @default("USDC")
+  status           InvoiceStatus @default(PENDING)
+  fundedAmount     Float         @default(0)
+  sharesTotal      Int
+  sharesSold       Int           @default(0)
+  metadataUri      String?
+  maturityDate     DateTime
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  creator      User          @relation(fields: [creatorId], references: [id])
+  shares       Share[]
+  settlement   Settlement?
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([maturityDate])
+}
+
+model Share {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  holderId      String
+  shareCount    Int
+  purchasePrice Float
+  purchasedAt   DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  holder  User    @relation(fields: [holderId], references: [id])
+
+  @@index([invoiceId])
+  @@index([holderId])
+}
+
+model Settlement {
+  id                String   @id @default(cuid())
+  invoiceId         String   @unique
+  settlementAmount  Float
+  settledAt         DateTime @default(now())
+  txHash            String?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}
