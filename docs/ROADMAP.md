@@ -1,5 +1,15 @@
 # FactBridge Roadmap
 
+## v1.1 — Real funding and settlement (completed)
+
+- [x] SEP-41 token custody: funding transfers principal to the SME, settlement pulls the face value from the buyer
+- [x] Per-funder positions (`Position { contributed, shares }`) with pro-rata payouts
+- [x] Discount-based funding target (`amount * (10000 - discount_bps) / 10000`)
+- [x] Persistent-storage TTL extension so invoices survive entry expiry
+- [x] Creator auth and distinct creator/buyer validation
+- [x] Prepared-transaction clients in the backend and frontend (simulation + footprint)
+- [x] Testnet end-to-end harness and recorded evidence (`docs/EVIDENCE.md`)
+
 ## Phase 1: Foundation (v1.0)
 
 ### Smart Contracts

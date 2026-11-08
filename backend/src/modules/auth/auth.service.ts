@@ -33,7 +33,7 @@ function generateToken(user: { id: string; email: string; role: string }): strin
   return jwt.sign(
     { userId: user.id, email: user.email, role: user.role },
     config.jwtSecret,
-    { expiresIn: config.jwtExpiresIn }
+    { expiresIn: config.jwtExpiresIn as jwt.SignOptions["expiresIn"] }
   );
 }
 

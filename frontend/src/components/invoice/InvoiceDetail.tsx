@@ -1,5 +1,4 @@
 import {
-  Clock,
   Users,
   Calendar,
   Link2,
@@ -107,7 +106,6 @@ export default function InvoiceDetail({
 }: InvoiceDetailProps) {
   const days = daysUntil(invoice.maturityDate);
   const isMatured = invoice.status === InvoiceStatus.Matured;
-  const isSettled = invoice.status === InvoiceStatus.Settled;
   const canFund =
     invoice.status === InvoiceStatus.Pending ||
     invoice.status === InvoiceStatus.PartiallyFunded;

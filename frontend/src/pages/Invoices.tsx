@@ -1,23 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, LayoutGrid, List } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, FileText } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useWallet } from "@/hooks/useWallet";
-import type { InvoiceStatus } from "@/types";
+import { InvoiceStatus } from "@/types";
 import InvoiceCard from "@/components/invoice/InvoiceCard";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import StatusBadge from "@/components/ui/StatusBadge";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { cn } from "@/utils/format";
 
 const statusFilters: (InvoiceStatus | "all")[] = [
   "all",
-  "pending",
-  "partially_funded",
-  "funded",
-  "matured",
-  "settled",
+  InvoiceStatus.Pending,
+  InvoiceStatus.PartiallyFunded,
+  InvoiceStatus.Funded,
+  InvoiceStatus.Matured,
+  InvoiceStatus.Settled,
 ];
 
 export default function Invoices() {

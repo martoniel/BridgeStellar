@@ -21,4 +21,10 @@ export const config = {
   sorobanRpcUrl:
     process.env.SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org",
   contractId: process.env.CONTRACT_ID || "",
+  /** SEP-41 token used for funding and settlement. Defaults to the native asset. */
+  tokenContractId: process.env.TOKEN_CONTRACT_ID || "",
+  /** Account used for read-only simulations (no signing). */
+  platformAddress: process.env.PLATFORM_ADDRESS || "",
+  /** Discount applied to new invoices when the client does not specify one. */
+  defaultDiscountBps: parseInt(process.env.DEFAULT_DISCOUNT_BPS || "500", 10),
 };

@@ -5,7 +5,6 @@ import InvoiceCard from "@/components/invoice/InvoiceCard";
 import FundInvoiceModal from "@/components/invoice/FundInvoiceModal";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import type { Invoice, MarketplaceFilters } from "@/types";
-import { cn } from "@/utils/format";
 
 export default function Marketplace() {
   const [filters, setFilters] = useState<MarketplaceFilters>({

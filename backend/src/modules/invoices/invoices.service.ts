@@ -13,6 +13,18 @@ import { createNotification } from "../../services/notifications";
 
 const prisma = new PrismaClient();
 
+/** The wallet that must sign the on-chain invocation for this user. */
+async function getStellarAddress(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stellarAddress: true },
+  });
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+  return user.stellarAddress;
+}
+
 export async function listInvoices(query: InvoiceQueryInput, userId?: string) {
   const cacheKey = `invoices:list:${JSON.stringify(query)}:${userId || "all"}`;
   const cached = await cacheGet(cacheKey);
@@ -110,20 +122,36 @@ export async function createInvoice(input: CreateInvoiceInput, userId: string) {
     },
   });
 
+  let txXdr: string | undefined;
+
   try {
-    const contractInvoiceId = await stellarService.createInvoiceOnChain(invoice);
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: { contractInvoiceId, status: "ACTIVE" },
+    const prepared = await stellarService.createInvoiceOnChain({
+      creatorAddress: invoice.creator.stellarAddress,
+      buyerAddress: invoice.buyerAddress,
+      amount: invoice.amount,
+      denom: invoice.denomination,
+      sharesTotal: invoice.sharesTotal,
+      maturityDate: invoice.maturityDate,
+      metadataUri: invoice.metadataUri || `factbridge://invoice/${invoice.id}`,
     });
-    invoice.contractInvoiceId = contractInvoiceId;
-    invoice.status = "ACTIVE";
+
+    if (prepared) {
+      txXdr = prepared.xdr;
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          contractInvoiceId: String(prepared.invoiceId),
+          status: "ACTIVE",
+        },
+      });
+      invoice.contractInvoiceId = String(prepared.invoiceId);
+    }
   } catch (err) {
-    console.error("Failed to create invoice on-chain:", err);
+    console.error("Failed to prepare invoice creation transaction:", err);
   }
 
   await cacheDel(`invoices:list:*`);
-  return invoice;
+  return { ...invoice, status: "ACTIVE" as const, txXdr };
 }
 
 export async function updateInvoice(id: string, input: UpdateInvoiceInput, userId: string) {
@@ -165,14 +193,17 @@ export async function fundInvoice(id: string, input: FundInvoiceInput, userId: s
     throw new AppError(400, "Funding amount exceeds invoice total");
   }
 
-  let txHash: string | undefined;
-  try {
-    txHash = await stellarService.fundInvoiceOnChain(
-      invoice.contractInvoiceId!,
-      input.amount
-    );
-  } catch (err) {
-    console.error("On-chain funding failed:", err);
+  let txXdr: string | undefined;
+  if (invoice.contractInvoiceId) {
+    try {
+      txXdr = await stellarService.fundInvoiceOnChain({
+        funderAddress: await getStellarAddress(userId),
+        invoiceId: Number(invoice.contractInvoiceId),
+        amount: input.amount,
+      });
+    } catch (err) {
+      console.error("Failed to prepare funding transaction:", err);
+    }
   }
 
   const updated = await prisma.invoice.update({
@@ -194,7 +225,7 @@ export async function fundInvoice(id: string, input: FundInvoiceInput, userId: s
 
   await cacheDel(`invoice:${id}`);
   await cacheDel(`invoices:list:*`);
-  return { invoice: updated, txHash };
+  return { invoice: updated, txXdr };
 }
 
 export async function purchaseShares(
@@ -220,15 +251,17 @@ export async function purchaseShares(
 
   const totalCost = input.shareCount * input.pricePerShare;
 
-  let txHash: string | undefined;
-  try {
-    txHash = await stellarService.purchaseSharesOnChain(
-      invoice.contractInvoiceId!,
-      input.shareCount,
-      totalCost
-    );
-  } catch (err) {
-    console.error("On-chain share purchase failed:", err);
+  let txXdr: string | undefined;
+  if (invoice.contractInvoiceId) {
+    try {
+      txXdr = await stellarService.purchaseSharesOnChain({
+        investorAddress: await getStellarAddress(userId),
+        invoiceId: Number(invoice.contractInvoiceId),
+        shareCount: input.shareCount,
+      });
+    } catch (err) {
+      console.error("Failed to prepare share purchase transaction:", err);
+    }
   }
 
   const [share, updatedInvoice] = await prisma.$transaction([
@@ -254,7 +287,7 @@ export async function purchaseShares(
 
   await cacheDel(`invoice:${id}`);
   await cacheDel(`invoices:list:*`);
-  return { share, txHash };
+  return { share, txXdr };
 }
 
 export async function settleInvoice(id: string, userId: string) {
@@ -266,21 +299,26 @@ export async function settleInvoice(id: string, userId: string) {
     throw new AppError(400, "Only FUNDED invoices can be settled");
   }
 
-  let txHash: string | undefined;
-  try {
-    txHash = await stellarService.settleInvoiceOnChain(invoice.contractInvoiceId!);
-  } catch (err) {
-    console.error("On-chain settlement failed:", err);
+  let txXdr: string | undefined;
+  if (invoice.contractInvoiceId) {
+    try {
+      txXdr = await stellarService.settleInvoiceOnChain({
+        buyerAddress: await getStellarAddress(userId),
+        invoiceId: Number(invoice.contractInvoiceId),
+      });
+    } catch (err) {
+      console.error("Failed to prepare settlement transaction:", err);
+    }
   }
 
-  const settlementAmount = invoice.fundedAmount * 1.1; // 10% return for funders
+  // The buyer repays the invoice face value on-chain; funders keep the spread.
+  const settlementAmount = invoice.amount;
 
   const [settlement, updatedInvoice] = await prisma.$transaction([
     prisma.settlement.create({
       data: {
         invoiceId: id,
         settlementAmount,
-        txHash,
       },
     }),
     prisma.invoice.update({
@@ -297,5 +335,5 @@ export async function settleInvoice(id: string, userId: string) {
 
   await cacheDel(`invoice:${id}`);
   await cacheDel(`invoices:list:*`);
-  return { settlement, invoice: updatedInvoice };
+  return { settlement, invoice: updatedInvoice, txXdr };
 }

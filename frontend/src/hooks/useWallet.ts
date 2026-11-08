@@ -54,7 +54,7 @@ export const useWallet = create<WalletState>()(
       signAndSubmit: async (xdr: string, networkPassphrase?: string) => {
         const result = await stellar.signAndSubmitTransaction(xdr, {
           networkPassphrase,
-          submit: true,
+          accountToSign: get().address ?? undefined,
         });
         return result.hash;
       },

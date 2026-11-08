@@ -29,7 +29,6 @@ export default function PurchaseSharesModal({
   onClose,
   invoiceId,
   invoiceAmount,
-  fundedAmount,
   currency,
   sharePrice,
   totalShares,
