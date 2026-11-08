@@ -24,20 +24,31 @@ African SMEs face a **$1.5 trillion trade finance gap**. They have confirmed pur
 ## How It Works
 
 ```
-SME creates invoice on FactBridge
+SME creates invoice on FactBridge (face value, discount, maturity)
         |
-Soroban contract mints InvoiceToken (NFT)
+Soroban contract stores the InvoiceToken and computes the funding target
         |
 Invoice listed on marketplace
         |
-Liquidity provider purchases shares
+Liquidity providers fund it with a SEP-41 token (XLM or stablecoin)
         |
-SME receives instant stablecoin payout
+The token transfer pays the SME immediately; each funder gets a position
         |
-Buyer pays invoice on maturity date
+Buyer repays the face value on maturity
         |
-Smart contract auto-settles to shareholders
+Contract distributes the face value pro-rata to every funder
 ```
+
+Funding and settlement are real asset movements, not bookkeeping. The contract
+calls the Stellar Asset Contract for every transfer, enforces auth on each party
+(`creator`, `funder`, `buyer`), and settles atomically in a single transaction.
+
+### Economics
+
+An invoice with a 1,000 XLM face value and a 500 bps (5%) discount has a
+**950 XLM funding target**. Funders contribute 950 XLM, the SME receives that
+working capital immediately, and on maturity the buyer pays 1,000 XLM which is
+distributed to funders pro-rata. The 50 XLM spread is the funders' yield.
 
 ## Tech Stack
 
@@ -100,7 +111,8 @@ FactBridge/
 
 ```bash
 cd contracts
-cargo build --target wasm32-unknown-unknown --release
+rustup target add wasm32v1-none   # required by Soroban SDK 25
+cargo build --target wasm32v1-none --release
 cargo test
 ```
 
@@ -126,39 +138,53 @@ npm run dev
 
 ## Smart Contract: `factbridge`
 
-The Soroban smart contract manages the full invoice lifecycle:
+The Soroban smart contract manages the full invoice lifecycle. All amounts are
+`i128` in the token's smallest unit (stroops for XLM), and every write path
+requires the acting party to authorize the invocation.
 
 | Function | Description |
 |----------|-------------|
-| `create_invoice` | Mint a new InvoiceToken with metadata |
-| `fund_invoice` | Add funding to an invoice |
-| `purchase_shares` | Buy fractional shares from creator |
-| `settle_invoice` | Auto-settle when buyer pays |
-| `default_invoice` | Mark invoice as defaulted past maturity |
-| `get_invoice` | Read invoice state |
+| `create_invoice(creator, buyer, token, amount, denom, shares_total, maturity_date, metadata_uri, discount_bps)` | Tokenize an invoice and compute its funding target |
+| `fund_invoice(funder, invoice_id, amount)` | Transfer SEP-41 tokens from the funder to the SME and record a position |
+| `purchase_shares(investor, invoice_id, share_count)` | Buy a specific number of shares at the pro-rata principal cost |
+| `settle_invoice(buyer, invoice_id)` | Buyer pays the face value; the contract distributes it pro-rata |
+| `default_invoice(caller, invoice_id)` | Flag a past-maturity invoice after the 7-day grace period |
+| `get_invoice`, `get_position`, `get_funders`, `get_invoice_list`, `get_invoice_count` | Read-only views |
 
 ### Events
 
 | Event | Trigger |
 |-------|---------|
-| `invoice_created` | New invoice minted |
-| `invoice_funded` | Invoice receives funding |
-| `shares_purchased` | Liquidity provider buys shares |
-| `invoice_settled` | Buyer payment received |
-| `invoice_defaulted` | Invoice past maturity |
+| `invoice_created` | New invoice recorded |
+| `invoice_funded` | Funder contributes principal |
+| `shares_purchased` | Investor buys shares |
+| `invoice_settled` | Buyer repays the invoice |
+| `settlement_distributed` | Per-funder payout during settlement |
+| `invoice_defaulted` | Invoice past maturity + grace period |
+
+### Verified on testnet
+
+The full flow — deploy, tokenize, two funders, maturity, settlement — runs
+against Stellar testnet with real transactions. See
+[docs/EVIDENCE.md](docs/EVIDENCE.md) for transaction hashes, balance deltas and
+the reproducible script (`scripts/e2e-testnet.mjs`).
 
 ## Testing
 
 ```bash
-# All tests
+# Contract unit tests (18 tests)
 cd contracts && cargo test
-cd frontend && npm test
-cd backend && npm test
 
-# With coverage
-cd frontend && npm run test:coverage
-cd backend && npm run test:cov
+# End-to-end testnet run (deploys, funds from two LPs, settles)
+cd scripts && npm install && npm run e2e:testnet
+
+# Application builds
+cd frontend && npm run typecheck && npm run build
+cd backend && npm run build
 ```
+
+Recorded results and transaction links live in
+[docs/EVIDENCE.md](docs/EVIDENCE.md).
 
 ## Contributing
 

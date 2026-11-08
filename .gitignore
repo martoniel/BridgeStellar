@@ -42,6 +42,7 @@ backend/prisma/migrations/
 # Rust
 contracts/target/
 contracts/Cargo.lock
+contracts/test_snapshots/
 
 # Redis
 dump.rdb

@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-11-08T11:12:58.829Z",
+  "network": "testnet",
+  "rpc": "https://soroban-testnet.stellar.org",
+  "contractId": "CCYVAVSAM4UK7QTFHCBHBXSJMJJ2JM2ONYHXIDIUQCJGXDKURKIQ4E4B",
+  "token": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+  "invoice": {
+    "faceValue": "10000000000",
+    "discountBps": 500,
+    "fundingTarget": "9500000000",
+    "sharesTotal": 1000,
+    "contributions": {
+      "funderA": "5000000000",
+      "funderB": "4500000000"
+    },
+    "id": "1",
+    "statusAfterFunding": "Funded",
+    "statusAfterSettlement": "Settled"
+  },
+  "transactions": {
+    "uploadWasm": {
+      "hash": "a2891d66c77384fdf39081ea9ee43ed775aa9e67a670bf7cbad572c46b8086e9",
+      "link": "https://stellar.expert/explorer/testnet/tx/a2891d66c77384fdf39081ea9ee43ed775aa9e67a670bf7cbad572c46b8086e9"
+    },
+    "deployContract": {
+      "hash": "c6e7412e9e5b8b4602694e7a26e011d27af8a04b0fb0b1d2c7c8c3d354f0e5b2",
+      "link": "https://stellar.expert/explorer/testnet/tx/c6e7412e9e5b8b4602694e7a26e011d27af8a04b0fb0b1d2c7c8c3d354f0e5b2"
+    },
+    "createInvoice": {
+      "hash": "989cb740891b8ad4e0ffcf89a92fc10cccf0e04d4e6c2ff466d76af62cd167fa",
+      "link": "https://stellar.expert/explorer/testnet/tx/989cb740891b8ad4e0ffcf89a92fc10cccf0e04d4e6c2ff466d76af62cd167fa"
+    },
+    "fundA": {
+      "hash": "a3baa500201ca8b4e857bf58daf14517ddf5db2b8257692f9b763ada8ba58203",
+      "link": "https://stellar.expert/explorer/testnet/tx/a3baa500201ca8b4e857bf58daf14517ddf5db2b8257692f9b763ada8ba58203"
+    },
+    "fundB": {
+      "hash": "ff17567da1947c3ba1808813bac8b666b980406bfae6b692841a0231007ee1a0",
+      "link": "https://stellar.expert/explorer/testnet/tx/ff17567da1947c3ba1808813bac8b666b980406bfae6b692841a0231007ee1a0"
+    },
+    "settle": {
+      "hash": "bbe0e87ffe1c5d2fa4192ed6ae5abfd31bc108af86bc8f13bc393815b5226464",
+      "link": "https://stellar.expert/explorer/testnet/tx/bbe0e87ffe1c5d2fa4192ed6ae5abfd31bc108af86bc8f13bc393815b5226464"
+    }
+  },
+  "balances": {
+    "seller": {
+      "before": "99998725785",
+      "after": "109498725785",
+      "delta": "9500000000"
+    },
+    "funderA": {
+      "before": "100000000000",
+      "after": "100262680952",
+      "delta": "262680952"
+    },
+    "funderB": {
+      "before": "100000000000",
+      "after": "100236501405",
+      "delta": "236501405"
+    },
+    "buyer": {
+      "before": "100000000000",
+      "after": "89999886500",
+      "delta": "-10000113500"
+    }
+  },
+  "accounts": {
+    "deployer": "GDHTN372CWKW3QFKUPKZPMLW6FASXKAPV5LUSYAHUBVE2CK3IP2LY3RH",
+    "seller": "GDGEYUXRCCKWTWP3J3WE7KMOIYGCC45X7LDUPXSZSRT5HZCOMSBYNLKH",
+    "buyer": "GBKWGWAGTP2DJROS7E3345DCV2YDHCNI2ES7M2EXAPTVP37NON3IFG4V",
+    "funderA": "GBGV5IKU7TZOBP3DGIFVYA7P7WSYUWYP3XREPKUIDXM67MRBEZLZRIRW",
+    "funderB": "GDH3AULZKT4PCJ7ALUEG7YAYVV5R7V5D2PPXCPRKD67ARKMZ62PAAR7S"
+  },
+  "settlement": {
+    "faceValuePaid": "10000000000",
+    "payouts": {
+      "funderA": "5263157894",
+      "funderB": "4736842106"
+    },
+    "funders": [
+      "GBGV5IKU7TZOBP3DGIFVYA7P7WSYUWYP3XREPKUIDXM67MRBEZLZRIRW",
+      "GDH3AULZKT4PCJ7ALUEG7YAYVV5R7V5D2PPXCPRKD67ARKMZ62PAAR7S"
+    ]
+  },
+  "checks": {
+    "invoice status is Settled": true,
+    "both funders recorded on-chain": true,
+    "seller received the funding target (net of fees)": true,
+    "funder A earned the discount yield (net of fees)": true,
+    "funder B earned the discount yield (net of fees)": true,
+    "buyer paid the face value": true,
+    "payouts sum to the face value": true
+  }
+}

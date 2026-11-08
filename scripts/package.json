@@ -1,0 +1,12 @@
+{
+  "name": "factbridge-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Deployment and testnet end-to-end verification scripts for FactBridge",
+  "scripts": {
+    "e2e:testnet": "node e2e-testnet.mjs"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^17.4.0"
+  }
+}
